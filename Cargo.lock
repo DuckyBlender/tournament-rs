@@ -62,7 +62,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "tournament"
+name = "tournament-rs"
 version = "0.1.0"
 dependencies = [
  "rand",

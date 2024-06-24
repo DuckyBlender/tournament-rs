@@ -2,7 +2,6 @@
     clippy::all,
     clippy::pedantic,
     clippy::nursery,
-    clippy::cargo,
 )]
 
 use std::fmt;
@@ -17,7 +16,7 @@ pub struct Player {
 }
 
 /// Represents a match between two players.
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Match {
     pub player1: Player,
     pub player2: Player,
@@ -25,7 +24,7 @@ pub struct Match {
 }
 
 /// Enum to represent the type of tournament.
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum TournamentType {
     SingleElimination,
     DoubleElimination,
@@ -33,7 +32,7 @@ pub enum TournamentType {
 }
 
 /// Represents a tournament.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct Tournament {
     pub tournament_type: TournamentType,
     pub players: Vec<Player>,
@@ -76,7 +75,7 @@ impl Tournament {
     /// # Returns
     ///
     /// A new `Tournament` instance.
-    pub fn new(tournament_type: TournamentType, players: Vec<Player>) -> Self {
+    #[must_use] pub fn new(tournament_type: TournamentType, players: Vec<Player>) -> Self {
         Self {
             tournament_type,
             players,
@@ -157,7 +156,7 @@ impl Tournament {
                 break;
             }
         }
-        final_winner.or(winners_bracket.first().cloned())
+        final_winner.or_else(|| winners_bracket.first().cloned())
     }
 
     /// Starts a Swiss-system tournament.
@@ -174,12 +173,12 @@ impl Tournament {
             .collect::<HashMap<Player, i32>>();
         for round in 0..rounds {
             println!("Round {}:", round + 1);
-            let round_matches = self.pair_players_swiss(&scores);
+            let round_matches = Self::pair_players_swiss(&scores);
             for (player1, player2) in round_matches {
                 let winner = self.simulate_match(&player1, &player2);
                 *scores.entry(winner).or_insert(0) += 1;
             }
-            self.print_leaderboard(&scores);
+            Self::print_leaderboard(&scores);
         }
         scores
             .into_iter()
@@ -269,7 +268,7 @@ impl Tournament {
     /// # Returns
     ///
     /// A vector of player pairs for the round.
-    fn pair_players_swiss(&self, scores: &HashMap<Player, i32>) -> Vec<(Player, Player)> {
+    fn pair_players_swiss(scores: &HashMap<Player, i32>) -> Vec<(Player, Player)> {
         let mut players_sorted: Vec<_> = scores.iter().collect();
         players_sorted.sort_by_key(|&(_, &score)| -score);
         players_sorted
@@ -289,12 +288,12 @@ impl Tournament {
     /// # Arguments
     ///
     /// * `scores` - A hashmap of players and their scores.
-    fn print_leaderboard(&self, scores: &HashMap<Player, i32>) {
+    fn print_leaderboard(scores: &HashMap<Player, i32>) {
         let mut leaderboard: Vec<_> = scores.iter().collect();
         leaderboard.sort_by_key(|&(_, &score)| -score);
         println!("Leaderboard:");
         for (player, score) in leaderboard {
-            println!("{} - {} points", player, score);
+            println!("{player} - {score} points");
         }
     }
 }
@@ -317,7 +316,7 @@ mod tests {
         (1..=num)
             .map(|i| Player {
                 id: i,
-                name: format!("Player {}", i),
+                name: format!("Player {i}"),
             })
             .collect()
     }
@@ -330,7 +329,7 @@ mod tests {
         assert!(winner.is_some());
         println!("Single Elimination Winner: {}", winner.unwrap());
         for match_ in &tournament.matches {
-            println!("{}", match_);
+            println!("{match_}");
         }
         // Step-by-step verification
         let expected_matches = players.len() - 1; // 8 players -> 7 matches
@@ -338,10 +337,6 @@ mod tests {
         for match_ in &tournament.matches {
             assert!(match_.winner.is_some());
         }
-        // Show players who are out of the tournament
-        let mut out_players = players.clone();
-        out_players.retain(|p| !tournament.matches.iter().any(|m| m.winner.as_ref() == Some(p)));
-        println!("Players out of the tournament: {:?}", out_players);
     }
 
     #[test]
@@ -352,7 +347,7 @@ mod tests {
         assert!(winner.is_some());
         println!("Double Elimination Winner: {}", winner.unwrap());
         for match_ in &tournament.matches {
-            println!("{}", match_);
+            println!("{match_}");
         }
         // Step-by-step verification
         // The number of matches can vary due to the double elimination structure
@@ -363,16 +358,16 @@ mod tests {
         // Show winner and loser brackets
         let mut winners_bracket_matches = Vec::new();
         let mut losers_bracket_matches = Vec::new();
-        let mut winners_bracket_players = players.clone();
-        let mut losers_bracket_players = Vec::new();
+        let mut winners_bracket_players = players;
+        // let mut losers_bracket_players = Vec::new();
         for match_ in &tournament.matches {
             if winners_bracket_players.contains(&match_.player1) && winners_bracket_players.contains(&match_.player2) {
                 winners_bracket_matches.push(match_);
                 if let Some(winner) = &match_.winner {
                     winners_bracket_players.retain(|p| p != winner);
-                    losers_bracket_players.push(match_.player1.clone());
-                    losers_bracket_players.push(match_.player2.clone());
-                    losers_bracket_players.retain(|p| p != winner);
+                    // losers_bracket_players.push(match_.player1.clone());
+                    // losers_bracket_players.push(match_.player2.clone());
+                    // losers_bracket_players.retain(|p| p != winner);
                 }
             } else {
                 losers_bracket_matches.push(match_);
@@ -380,11 +375,11 @@ mod tests {
         }
         println!("Winners Bracket:");
         for match_ in &winners_bracket_matches {
-            println!("{}", match_);
+            println!("{match_}");
         }
         println!("Losers Bracket:");
         for match_ in &losers_bracket_matches {
-            println!("{}", match_);
+            println!("{match_}");
         }
     }
 
@@ -396,7 +391,7 @@ mod tests {
         assert!(winner.is_some());
         println!("Swiss Winner: {}", winner.unwrap());
         for match_ in &tournament.matches {
-            println!("{}", match_);
+            println!("{match_}");
         }
         // Step-by-step verification
         // Swiss system should have log2(n) rounds, where n is the number of players
@@ -415,6 +410,6 @@ mod tests {
                 *scores.entry(winner.clone()).or_insert(0) += 1;
             }
         }
-        println!("Players' scores: {:?}", scores);
+        println!("Players' scores: {scores:?}");
     }
 }

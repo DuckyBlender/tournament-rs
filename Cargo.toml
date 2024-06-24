@@ -1,7 +1,10 @@
 [package]
-name = "tournament"
+name = "tournament-rs"
 version = "0.1.0"
 edition = "2021"
+license = "Apache-2.0"
+repository = "https://github.com/DuckyBlender/tournament-rs"
+readme = "README.md"
 
 [dependencies]
 rand = "0.8.5"
