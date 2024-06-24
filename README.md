@@ -22,7 +22,7 @@ To use this project, simply clone the repository and run the tests using `cargo 
 
 ```toml
 [dependencies]
-tournament-management = { git = "https://github.com/DuckyBlender/tournament-rs" }
+tournament-rs = { git = "https://github.com/DuckyBlender/tournament-rs" }
 ```
 
 **Example Usage**
